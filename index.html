@@ -748,7 +748,6 @@
             <span class="card-number">${String(i+1).padStart(2,'0')}</span>
             <span class="card-status-icon">${cardState[i] === 'known' ? '✓' : cardState[i] === 'unknown' ? '✗' : ''}</span>
             <div class="card-back-text">${v.en}</div>
-            <div class="card-back-verb">${v.es}</div>
             <div class="card-actions">
               <button class="btn-known" onclick="markCard(event, ${i}, 'known')">✓ Known</button>
               <button class="btn-unknown" onclick="markCard(event, ${i}, 'unknown')">✗ Review</button>
