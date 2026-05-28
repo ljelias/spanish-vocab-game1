@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verbos en Español — Flashcard Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --ink: #1A1614;
+    --terracotta: #C4603A;
+    --sage: #5A7A5C;
+    --gold: #D4A843;
+    --muted: #8A7F78;
+    --card-bg: #FEFCF8;
+    --border: #D9D0C4;
+    --known-bg: #EBF2EB;
+    --unknown-bg: #FAEAE4;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOADING / MEMORIZE SCREEN ── */
+  #memorize-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+    position: relative;
+  }
+
+  .bg-pattern {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(196,96,58,0.08) 0%, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(90,122,92,0.08) 0%, transparent 45%);
+  }
+
+  .memorize-header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative; z-index: 1;
+  }
+
+  .pill-label {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    background: rgba(196,96,58,0.1);
+    border: 1px solid rgba(196,96,58,0.25);
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--terracotta);
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 460px;
+  }
+
+  /* Vocab table */
+  .vocab-container {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 860px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(26,22,20,0.07);
+    margin-bottom: 40px;
+  }
+
+  .vocab-table-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 14px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .vocab-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-height: 520px;
+    overflow-y: auto;
+  }
+
+  .vocab-list::-webkit-scrollbar { width: 6px; }
+  .vocab-list::-webkit-scrollbar-track { background: transparent; }
+  .vocab-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .vocab-row {
+    display: contents;
+  }
+
+  .vocab-row:nth-child(odd) .vocab-cell {
+    background: rgba(26,22,20,0.02);
+  }
+
+  .vocab-cell {
+    padding: 10px 28px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+  }
+
+  .vocab-cell.spanish {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+    border-right: 1px solid var(--border);
+  }
+
+  .vocab-cell.english {
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* Start button */
+  .start-area {
+    position: relative; z-index: 1;
+    text-align: center;
+  }
+
+  .timer-note {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--terracotta);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 16px 44px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 0 4px 20px rgba(196,96,58,0.35);
+  }
+
+  .btn-start:hover {
+    background: #B3522E;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(196,96,58,0.4);
+  }
+
+  .btn-start:active { transform: translateY(0); }
+
+  .btn-start svg { width: 18px; height: 18px; }
+
+  /* ── GAME SCREEN ── */
+  #game-screen {
+    display: none;
+    min-height: 100vh;
+    padding: 32px 24px 80px;
+  }
+
+  .game-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: 0 auto 36px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .game-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .game-title em {
+    font-style: italic;
+    color: var(--terracotta);
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+  }
+
+  .stat-chip .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .chip-total .dot { background: var(--gold); }
+  .chip-known .dot { background: var(--sage); }
+  .chip-unknown .dot { background: var(--terracotta); }
+
+  .stat-chip span.num {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  .btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .btn-reset:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* Filter tabs */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    max-width: 1200px;
+    margin: 0 auto 28px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 7px 18px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--cream);
+  }
+
+  .filter-btn:hover:not(.active) {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  /* Instructions hint */
+  .hint-bar {
+    max-width: 1200px;
+    margin: 0 auto 28px;
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .hint-bar span { display: flex; align-items: center; gap: 5px; }
+
+  /* Card grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Individual flashcard */
+  .card-wrapper {
+    perspective: 900px;
+    height: 140px;
+    cursor: pointer;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+    border-radius: 12px;
+  }
+
+  .card-wrapper.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+
+  .card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    transition: border-color 0.2s, background 0.2s;
+    box-shadow: 0 2px 12px rgba(26,22,20,0.06);
+  }
+
+  .card-face.back {
+    transform: rotateY(180deg);
+  }
+
+  /* Known/unknown tint */
+  .card-wrapper.known .card-face {
+    border-color: var(--sage);
+    background: var(--known-bg);
+  }
+
+  .card-wrapper.unknown .card-face {
+    border-color: var(--terracotta);
+    background: var(--unknown-bg);
+  }
+
+  .card-wrapper:hover:not(.known):not(.unknown) .card-face {
+    border-color: #B8AFA8;
+    box-shadow: 0 6px 20px rgba(26,22,20,0.12);
+  }
+
+  .card-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--border);
+    position: absolute;
+    top: 10px; left: 12px;
+  }
+
+  .card-status-icon {
+    position: absolute;
+    top: 9px; right: 10px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .card-wrapper.known .card-status-icon { opacity: 1; }
+  .card-wrapper.unknown .card-status-icon { opacity: 1; }
+
+  .card-front-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .card-front-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .card-back-text {
+    font-size: 13px;
+    font-weight: 400;
+    text-align: center;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .card-back-verb {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Action buttons on back face */
+  .card-actions {
+    position: absolute;
+    bottom: 10px;
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-known, .btn-unknown {
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    border: 1.5px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.6;
+  }
+
+  .btn-known {
+    border-color: var(--sage);
+    color: var(--sage);
+    background: transparent;
+  }
+
+  .btn-known:hover { background: var(--sage); color: white; }
+
+  .btn-unknown {
+    border-color: var(--terracotta);
+    color: var(--terracotta);
+    background: transparent;
+  }
+
+  .btn-unknown:hover { background: var(--terracotta); color: white; }
+
+  /* ── COMPLETION BANNER ── */
+  #completion-banner {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--ink);
+    color: var(--cream);
+    padding: 18px 32px;
+    text-align: center;
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    animation: slideDown 0.4s ease;
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  #completion-banner h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+  }
+
+  #completion-banner p {
+    font-size: 14px;
+    color: rgba(245,240,232,0.7);
+  }
+
+  .banner-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .btn-banner {
+    padding: 8px 20px;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid rgba(245,240,232,0.4);
+    background: transparent;
+    color: var(--cream);
+  }
+
+  .btn-banner:hover {
+    background: rgba(245,240,232,0.15);
+  }
+
+  .btn-banner.primary {
+    background: var(--terracotta);
+    border-color: var(--terracotta);
+  }
+
+  .btn-banner.primary:hover { background: #B3522E; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    grid-column: 1 / -1;
+    font-size: 15px;
+  }
+
+  .empty-state strong { color: var(--ink); font-weight: 500; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .card-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .vocab-cell { padding: 9px 16px; }
+    .vocab-table-header { padding: 12px 16px; }
+    .game-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+
+<!-- ══════════════════════════════
+     MEMORIZE SCREEN
+══════════════════════════════ -->
+<section id="memorize-screen">
+  <div class="memorize-header">
+    <div class="pill-label">Vocabulario · Repaso</div>
+    <h1>Memoriza estos<br><em>verbos</em> en español</h1>
+    <p class="subtitle">Study the verbs and their definitions below, then test yourself with the flashcard game.</p>
+  </div>
+
+  <div class="vocab-container">
+    <div class="vocab-table-header">
+      <span>Spanish Verb</span>
+      <span>English Definition</span>
+    </div>
+    <div class="vocab-list" id="vocab-list"></div>
+  </div>
+
+  <div class="start-area">
+    <p class="timer-note">Take your time — click Start when you're ready.</p>
+    <button class="btn-start" onclick="startGame()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      Start Flashcard Game
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     GAME SCREEN
+══════════════════════════════ -->
+<section id="game-screen">
+  <div class="game-header">
+    <div class="game-title">Flashcard <em>Review</em></div>
+    <div class="stats-bar">
+      <div class="stat-chip chip-total">
+        <div class="dot"></div>
+        <span>Total:</span>
+        <span class="num" id="stat-total">0</span>
+      </div>
+      <div class="stat-chip chip-known">
+        <div class="dot"></div>
+        <span>Known:</span>
+        <span class="num" id="stat-known">0</span>
+      </div>
+      <div class="stat-chip chip-unknown">
+        <div class="dot"></div>
+        <span>Still Learning:</span>
+        <span class="num" id="stat-unknown">0</span>
+      </div>
+      <button class="btn-reset" onclick="resetAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+        Reset All
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All Cards</button>
+    <button class="filter-btn" data-filter="unmarked" onclick="setFilter('unmarked', this)">Unmarked</button>
+    <button class="filter-btn" data-filter="known" onclick="setFilter('known', this)">Known ✓</button>
+    <button class="filter-btn" data-filter="unknown" onclick="setFilter('unknown', this)">Still Learning ✗</button>
+  </div>
+
+  <div class="hint-bar">
+    <span>🖱 Click card to flip</span>
+    <span>✓ / ✗ Mark your confidence</span>
+    <span>↩ Click again to unflip</span>
+  </div>
+
+  <div class="card-grid" id="card-grid"></div>
+</section>
+
+<!-- Completion Banner -->
+<div id="completion-banner">
+  <h2 id="banner-title">¡Excelente! 🎉</h2>
+  <p id="banner-msg"></p>
+  <div class="banner-buttons">
+    <button class="btn-banner" onclick="setFilter('unknown', document.querySelector('[data-filter=unknown]')); hideBanner()">Review Still Learning</button>
+    <button class="btn-banner primary" onclick="resetAll(); hideBanner()">Play Again</button>
+  </div>
+</div>
+
+<script>
+  const VOCAB = [
+    { es: "brindar",      en: "to give a toast (tribute)" },
+    { es: "caerse",       en: "to fall" },
+    { es: "casarse",      en: "to marry" },
+    { es: "celebrar",     en: "to celebrate" },
+    { es: "comprometerse",en: "to get engaged" },
+    { es: "conducir",     en: "to drive" },
+    { es: "conocer",      en: "to be acquainted with" },
+    { es: "conseguir",    en: "to obtain" },
+    { es: "correr",       en: "to run" },
+    { es: "dañar",        en: "to damage or injure" },
+    { es: "dar",          en: "to give" },
+    { es: "decir",        en: "to say or tell" },
+    { es: "divorciarse",  en: "to get divorced" },
+    { es: "doler",        en: "to be painful" },
+    { es: "dormir",       en: "to sleep" },
+    { es: "enamorarse",   en: "to fall or be in love" },
+    { es: "enfermarse",   en: "to get or be sick" },
+    { es: "escoger",      en: "to choose or select" },
+    { es: "escribir",     en: "to write" },
+    { es: "estornudar",   en: "to sneeze" },
+    { es: "hablar",       en: "to speak" },
+    { es: "hacer",        en: "to make or to do" },
+    { es: "invitar",      en: "to invite" },
+    { es: "ir",           en: "to go" },
+    { es: "llevar",       en: "to carry or wear" },
+    { es: "llevarse bien",en: "to get along well" },
+    { es: "merendar",     en: "to snack" },
+    { es: "morir",        en: "to die" },
+    { es: "odiar",        en: "to hate" },
+    { es: "ofrecer",      en: "to offer" },
+    { es: "olvidar",      en: "to forget" },
+    { es: "parecer",      en: "to seem, appear, or resemble" },
+    { es: "pedir",        en: "to request or ask for" },
+    { es: "poder",        en: "to be able to / can" },
+    { es: "poner",        en: "to put" },
+    { es: "preferir",     en: "to prefer" },
+    { es: "probar",       en: "to test or try" },
+    { es: "producir",     en: "to produce" },
+    { es: "prohibir",     en: "to prohibit" },
+    { es: "querer",       en: "to desire, want, or like" },
+    { es: "recetar",      en: "to prescribe" },
+    { es: "recomendar",   en: "to recommend" },
+    { es: "regalar",      en: "to give a gift" },
+    { es: "reírse",       en: "to laugh" },
+    { es: "relajarse",    en: "to relax" },
+    { es: "repetir",      en: "to repeat" },
+    { es: "romper",       en: "to break" },
+    { es: "saber",        en: "to know (information or skills)" },
+    { es: "sacar",        en: "to take or remove" },
+    { es: "salir",        en: "to go out or exit" },
+    { es: "seguir",       en: "to continue or follow" },
+    { es: "sentirse",     en: "to feel" },
+    { es: "separarse",    en: "to separate" },
+    { es: "servir",       en: "to serve" },
+    { es: "sonreír",      en: "to smile" },
+    { es: "sorprender",   en: "to surprise" },
+    { es: "sufrir",       en: "to suffer (from)" },
+    { es: "tener",        en: "to have" },
+    { es: "tomar",        en: "to take" },
+    { es: "torcerse",     en: "to twist or sprain" },
+    { es: "toser",        en: "to cough" },
+    { es: "traducir",     en: "to translate" },
+    { es: "traer",        en: "to bring" },
+    { es: "venir",        en: "to come (to)" },
+    { es: "vestirse",     en: "to get dressed or put on" },
+  ];
+
+  // State: null = unmarked, 'known', 'unknown'
+  const cardState = new Array(VOCAB.length).fill(null);
+  let currentFilter = 'all';
+
+  // ── Build memorize list ──
+  (function buildVocabList() {
+    const list = document.getElementById('vocab-list');
+    VOCAB.forEach(v => {
+      const row = document.createElement('div');
+      row.className = 'vocab-row';
+      row.innerHTML = `
+        <div class="vocab-cell spanish">${v.es}</div>
+        <div class="vocab-cell english">${v.en}</div>
+      `;
+      list.appendChild(row);
+    });
+  })();
+
+  // ── Build card grid ──
+  function buildCards() {
+    const grid = document.getElementById('card-grid');
+    grid.innerHTML = '';
+    VOCAB.forEach((v, i) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'card-wrapper';
+      wrapper.id = `card-${i}`;
+      wrapper.dataset.index = i;
+      if (cardState[i]) wrapper.classList.add(cardState[i]);
+
+      wrapper.innerHTML = `
+        <div class="card-inner">
+          <div class="card-face front">
+            <span class="card-number">${String(i+1).padStart(2,'0')}</span>
+            <span class="card-status-icon" id="icon-${i}">${cardState[i] === 'known' ? '✓' : cardState[i] === 'unknown' ? '✗' : ''}</span>
+            <div class="card-front-text">${v.es}</div>
+            <div class="card-front-hint">tap to reveal</div>
+          </div>
+          <div class="card-face back">
+            <span class="card-number">${String(i+1).padStart(2,'0')}</span>
+            <span class="card-status-icon">${cardState[i] === 'known' ? '✓' : cardState[i] === 'unknown' ? '✗' : ''}</span>
+            <div class="card-back-text">${v.en}</div>
+            <div class="card-back-verb">${v.es}</div>
+            <div class="card-actions">
+              <button class="btn-known" onclick="markCard(event, ${i}, 'known')">✓ Known</button>
+              <button class="btn-unknown" onclick="markCard(event, ${i}, 'unknown')">✗ Review</button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      wrapper.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-known') || e.target.classList.contains('btn-unknown')) return;
+        wrapper.classList.toggle('flipped');
+      });
+
+      grid.appendChild(wrapper);
+    });
+
+    applyFilter();
+    updateStats();
+  }
+
+  // ── Mark a card ──
+  function markCard(e, index, status) {
+    e.stopPropagation();
+    const wrapper = document.getElementById(`card-${index}`);
+
+    // Toggle off if same status clicked again
+    if (cardState[index] === status) {
+      cardState[index] = null;
+      wrapper.classList.remove('known', 'unknown');
+      wrapper.querySelectorAll('.card-status-icon').forEach(el => el.textContent = '');
+    } else {
+      cardState[index] = status;
+      wrapper.classList.remove('known', 'unknown');
+      wrapper.classList.add(status);
+      const icon = status === 'known' ? '✓' : '✗';
+      wrapper.querySelectorAll('.card-status-icon').forEach(el => el.textContent = icon);
+    }
+
+    updateStats();
+    checkCompletion();
+
+    // If a filter is active and this card no longer matches, hide it with a fade
+    if (currentFilter !== 'all') {
+      setTimeout(() => applyFilter(), 400);
+    }
+  }
+
+  // ── Filter ──
+  function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter();
+  }
+
+  function applyFilter() {
+    const grid = document.getElementById('card-grid');
+    let visible = 0;
+
+    // Remove stale empty-state
+    const existing = grid.querySelector('.empty-state');
+    if (existing) existing.remove();
+
+    VOCAB.forEach((_, i) => {
+      const wrapper = document.getElementById(`card-${i}`);
+      if (!wrapper) return;
+      let show = false;
+      if (currentFilter === 'all') show = true;
+      else if (currentFilter === 'known') show = cardState[i] === 'known';
+      else if (currentFilter === 'unknown') show = cardState[i] === 'unknown';
+      else if (currentFilter === 'unmarked') show = cardState[i] === null;
+      wrapper.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (visible === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'empty-state';
+      const labels = { known: 'marked as Known', unknown: 'marked as Still Learning', unmarked: 'left unmarked' };
+      msg.innerHTML = `<strong>No cards here yet.</strong><br>Cards ${labels[currentFilter] || ''} will appear here.`;
+      grid.appendChild(msg);
+    }
+  }
+
+  // ── Stats ──
+  function updateStats() {
+    const known = cardState.filter(s => s === 'known').length;
+    const unknown = cardState.filter(s => s === 'unknown').length;
+    document.getElementById('stat-total').textContent = VOCAB.length;
+    document.getElementById('stat-known').textContent = known;
+    document.getElementById('stat-unknown').textContent = unknown;
+  }
+
+  // ── Completion check ──
+  function checkCompletion() {
+    const marked = cardState.filter(s => s !== null).length;
+    if (marked === VOCAB.length) {
+      const known = cardState.filter(s => s === 'known').length;
+      const banner = document.getElementById('completion-banner');
+      document.getElementById('banner-title').textContent =
+        known === VOCAB.length ? '¡Perfecto! 🎉' : known >= VOCAB.length * 0.8 ? '¡Muy bien! 🌟' : '¡Buen trabajo! 💪';
+      document.getElementById('banner-msg').textContent =
+        `You've marked all ${VOCAB.length} cards — ${known} known, ${VOCAB.length - known} still learning.`;
+      banner.style.display = 'flex';
+    }
+  }
+
+  function hideBanner() {
+    document.getElementById('completion-banner').style.display = 'none';
+  }
+
+  // ── Reset ──
+  function resetAll() {
+    cardState.fill(null);
+    buildCards();
+    setFilter('all', document.querySelector('[data-filter=all]'));
+    hideBanner();
+  }
+
+  // ── Start game ──
+  function startGame() {
+    document.getElementById('memorize-screen').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'block';
+    buildCards();
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>
